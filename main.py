@@ -1,8 +1,14 @@
 import pygame
 import sys
-import random
 from game.game_manager import GameManager
 from config import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
+
+# Ask player for allowed fails
+allowed_fails = 0
+try:
+    allowed_fails = int(input("Enter the number of allowed misses (e.g., 3): "))
+except:
+    allowed_fails = 3  # default
 
 # Initialize Pygame
 pygame.init()
@@ -10,9 +16,8 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Magic Tile Brain Game")
 
 clock = pygame.time.Clock()
-game = GameManager()
+game = GameManager(allowed_fails)
 
-# Main loop
 while True:
     screen.fill((255, 255, 255))
     for event in pygame.event.get():
@@ -24,6 +29,5 @@ while True:
 
     game.update()
     game.draw(screen)
-
     pygame.display.flip()
     clock.tick(FPS)
