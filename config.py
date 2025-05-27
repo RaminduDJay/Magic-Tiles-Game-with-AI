@@ -14,6 +14,8 @@ COLOR_INACTIVE = (211, 211, 211)
 COLOR_ACTIVE = (30, 144, 255)
 COLOR_BORDER = (0, 0, 0)
 COLOR_TEXT = (0, 0, 0)
+COLOR_GRAD_TOP = (245, 245, 255)   # 🌤 soft light top
+COLOR_GRAD_BOTTOM = (173, 216, 230)  # 💧 sky bottom
 
 # Keys
 KEY_MAPPING = [

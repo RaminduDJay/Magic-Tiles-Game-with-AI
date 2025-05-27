@@ -5,6 +5,7 @@ from config import TILE_SPEED, KEY_MAPPING, TILE_WIDTH, TILE_HEIGHT, SCREEN_WIDT
 import os
 import csv
 import time
+from utils.ui_utils import draw_gradient_background, draw_key_guides
 
 class GameManager:
     def __init__(self, max_health):
@@ -19,7 +20,6 @@ class GameManager:
         self.start_time = time.time()
         os.makedirs("data", exist_ok=True)
 
-        # Initialize CSV with headers
         self.interaction_file = "data/interactions.csv"
         with open(self.interaction_file, mode='w', newline='') as file:
             writer = csv.writer(file)
@@ -41,7 +41,6 @@ class GameManager:
         if event.type == pygame.KEYDOWN:
             key_name = pygame.key.name(event.key)
             event_time = time.time()
-
             matched = False
             for tile in self.tiles:
                 if tile.key == key_name and tile.is_hittable():
@@ -67,7 +66,6 @@ class GameManager:
         for tile in self.tiles:
             tile.update(TILE_SPEED)
 
-        # Check for missed tiles
         for tile in self.tiles:
             if tile.y > 560:
                 self.health -= 1
@@ -83,10 +81,12 @@ class GameManager:
         self.tiles = [t for t in self.tiles if t.active]
 
     def draw(self, screen):
-        font = pygame.font.SysFont(None, 40)
+        draw_gradient_background(screen)
+
+        font = pygame.font.SysFont("Arial", 30)
         if self.game_over:
-            text = font.render("Game Over! Score: {} | Press R to Restart".format(self.score), True, (255, 0, 0))
-            screen.blit(text, (50, 250))
+            game_over_text = font.render(f"Game Over! Score: {self.score} | Press R to Restart", True, (200, 0, 0))
+            screen.blit(game_over_text, (SCREEN_WIDTH // 2 - 300, 250))
         else:
             for tile in self.tiles:
                 tile.draw(screen)
@@ -94,18 +94,20 @@ class GameManager:
             score_text = font.render(f"Score: {self.score}", True, (0, 0, 0))
             screen.blit(score_text, (10, 10))
 
-            # Draw health bar
+            # Health Bar
             health_bar_x = 10
             health_bar_y = 50
             health_bar_width = 200
             health_bar_height = 20
             fill = (self.health / self.max_health) * health_bar_width
-
             pygame.draw.rect(screen, (255, 0, 0), (health_bar_x, health_bar_y, health_bar_width, health_bar_height), 2)
             pygame.draw.rect(screen, (0, 255, 0), (health_bar_x, health_bar_y, fill, health_bar_height))
 
             health_text = font.render(f"Health: {self.health}/{self.max_health}", True, (0, 0, 0))
             screen.blit(health_text, (health_bar_x + 210, health_bar_y - 5))
+
+            # Show key guides
+            draw_key_guides(screen)
 
     def end_game(self):
         self.game_over = True
