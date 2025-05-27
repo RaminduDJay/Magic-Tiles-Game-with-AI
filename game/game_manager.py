@@ -3,6 +3,8 @@ import random
 from game.tile import Tile
 from config import TILE_SPEED, KEY_MAPPING, TILE_WIDTH, TILE_HEIGHT, SCREEN_WIDTH
 import os
+import csv
+import time
 
 class GameManager:
     def __init__(self, max_health):
@@ -13,11 +15,22 @@ class GameManager:
         self.spawn_delay = 40
         self.health = max_health
         self.max_health = max_health
+        self.click_logs = []
+        self.start_time = time.time()
+        os.makedirs("data", exist_ok=True)
+
+        # Initialize CSV with headers
+        self.interaction_file = "data/interactions.csv"
+        with open(self.interaction_file, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["Timestamp", "Tile Speed", "Expected Key", "Pressed Key", "Correct", "Reaction Time (ms)"])
 
     def spawn_tile(self):
         column = random.randint(0, 8)
         key = KEY_MAPPING[column]
-        self.tiles.append(Tile(column, key))
+        tile = Tile(column, key)
+        tile.spawn_time = time.time()
+        self.tiles.append(tile)
 
     def handle_event(self, event):
         if self.game_over:
@@ -27,11 +40,20 @@ class GameManager:
 
         if event.type == pygame.KEYDOWN:
             key_name = pygame.key.name(event.key)
+            event_time = time.time()
+
+            matched = False
             for tile in self.tiles:
                 if tile.key == key_name and tile.is_hittable():
-                    tile.active = False
+                    reaction_time = round((event_time - tile.spawn_time) * 1000, 2)
                     self.score += 1
+                    matched = True
+                    self.log_interaction(TILE_SPEED, tile.key, key_name, True, reaction_time)
+                    tile.active = False
                     break
+
+            if not matched:
+                self.log_interaction(TILE_SPEED, "None", key_name, False, 0)
 
     def update(self):
         if self.game_over:
@@ -49,6 +71,11 @@ class GameManager:
         for tile in self.tiles:
             if tile.y > 560:
                 self.health -= 1
+                if hasattr(tile, 'spawn_time'):
+                    reaction_time = round((time.time() - tile.spawn_time) * 1000, 2)
+                else:
+                    reaction_time = 0
+                self.log_interaction(TILE_SPEED, tile.key, "Missed", False, reaction_time)
                 tile.active = False
                 if self.health <= 0:
                     self.end_game()
@@ -92,6 +119,11 @@ class GameManager:
         self.spawn_timer = 0
 
     def save_score(self):
-        os.makedirs("data", exist_ok=True)
         with open("data/scores.txt", "a") as f:
             f.write(str(self.score) + "\n")
+
+    def log_interaction(self, tile_speed, expected_key, pressed_key, correct, reaction_time):
+        with open(self.interaction_file, mode='a', newline='') as file:
+            writer = csv.writer(file)
+            timestamp = round(time.time() - self.start_time, 2)
+            writer.writerow([timestamp, tile_speed, expected_key, pressed_key, correct, reaction_time])
